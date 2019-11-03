@@ -1,12 +1,13 @@
 package dataaccess
 
 import entities.BillingRow
-import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.MongoClient
 import scalaz.Kleisli
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+
 
 trait BillingRepo {
-  def insertBilling(b: BillingRow) : Kleisli[Future, MongoDatabase, Unit]
-  def getBillingRows(fields : Seq[String]) : Kleisli[Future, MongoDatabase, Seq[BillingRow]]
+  def insertBilling(rows : Seq[BillingRow])(implicit ec: ExecutionContext) : Kleisli[Future, MongoClient, Unit]
+  def getBillingRows(fields : Seq[String])(implicit ec: ExecutionContext) : Kleisli[Future, MongoClient, Seq[BillingRow]]
 }

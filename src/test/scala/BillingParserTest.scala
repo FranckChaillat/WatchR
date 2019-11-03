@@ -1,6 +1,6 @@
 import java.text.SimpleDateFormat
 
-import entities.DebitRow
+import entities.BillingRow
 import org.scalatest.FlatSpec
 import services.WatcherService
 
@@ -25,7 +25,7 @@ class BillingParserTest extends FlatSpec {
     val df = new SimpleDateFormat("dd/MM/yyyy")
     val result = WatcherService.parseBillingRows (input)
     assert(result.length == 3)
-    assert(result.forall(_.isInstanceOf[DebitRow]))
+    assert(result.forall(_.isInstanceOf[BillingRow]))
     assert(df.format(result.head.valueDate) == "24/07/2019")
     assert(df.format(result.head.operationDate) == "24/07/2019")
     assert(result.head.amount == -6.0)

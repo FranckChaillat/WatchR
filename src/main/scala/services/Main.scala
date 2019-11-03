@@ -1,41 +1,48 @@
 package services
 
-import java.text.SimpleDateFormat
-
 import com.typesafe.config.{Config, ConfigFactory}
-import dataaccess.MongoBillingRepo
-import exceptions.LoginException
+import dataaccess.{MongoBillingRepo, Repositories}
+import org.json4s.{DefaultFormats, Formats}
 import org.mongodb.scala.MongoClient
 import org.openqa.selenium.chrome.ChromeDriver
-import scalaz.Scalaz._
-import utils.{Configuration, DriverFactory}
+import utils.DriverFactory
+import utils.configuration.{ConfigObject, Configuration}
+import org.json4s.jackson.Serialization.read
 
-import scala.concurrent.Future
-import scala.util.{Failure, Try}
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 object Main {
 
+  private def getMongoRepository(connectionString: String): MongoBillingRepo = {
+    new MongoBillingRepo {
+      override val dbDriver: MongoClient = MongoClient(connectionString)
+    }
+  }
+
   def main(args: Array[String]): Unit = {
 
-    lazy implicit val config: Config = ConfigFactory.load()
-    lazy implicit val driver: ChromeDriver = DriverFactory.buildDriver()
-    lazy val configuration = Configuration.getConfiguration
-    lazy val mongoDriver = MongoClient(configuration.connectionString)
+    implicit val jsonFormats: Formats = DefaultFormats
+    implicit val config: Config = ConfigFactory.load()
+    val configuration = Configuration.getConfiguration(read[ConfigObject](args(0)))
 
-    Try {
-      (args(0), args(1))
-    }.recoverWith {
-      case _: Throwable => Failure(LoginException())
-    }.map {
-      case (login, pwd) =>
-        WatcherService.connect(login, pwd)
-        val date = new SimpleDateFormat("dd/MM/yyyy").parse("07/07/2019")
-        val billingRows = WatcherService.getPaymentHistory(driver, date)
-        val insertRes = billingRows.map(r => MongoBillingRepo.insertBilling(r))
-          .sequenceU
-          .run(mongoDriver)
+    lazy val repositories = new Repositories {
+      override def billingRepo: MongoBillingRepo = getMongoRepository(configuration.connectionString)
 
-        Future.sequence(insertRes)
+      override def crawlingRepo: ChromeDriver = DriverFactory.buildDriver()
     }
+
+    val future = WatcherService.registerBilling(configuration.login, configuration.pwd).run(repositories)
+          .map { _ =>
+            println("Billing insertion have been done properly.")
+            "OK"
+          }.recover {
+             case e: Throwable =>
+              println(s"An error occurred while registering billing: ${e.getMessage}")
+              e.getMessage
+          }
+
+    Await.result(future, 2.minutes)
   }
 }

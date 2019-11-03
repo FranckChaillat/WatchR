@@ -2,30 +2,43 @@ package dataaccess
 
 import java.text.SimpleDateFormat
 
-import entities.{BillingRow, CreditRow, DebitRow}
+import entities.BillingRow
+import exceptions.BillingInsertionError
 import org.mongodb.scala.bson.{BsonDouble, BsonString}
 import org.mongodb.scala.model.Projections.include
-import org.mongodb.scala.{Document, MongoDatabase}
+import org.mongodb.scala.{Document, MongoClient}
 import scalaz.Kleisli
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-object MongoBillingRepo  {
 
+trait MongoBillingRepo extends BillingRepo {
+
+  // Abstract members
+  val dbDriver: MongoClient
 
   private implicit val dateFmt: SimpleDateFormat = new SimpleDateFormat("dd/MM/yyyy")
 
-  def insertBilling(r : BillingRow) : Kleisli[Future, MongoDatabase, Unit] = Kleisli {
-    mongoDatabase =>
-      mongoDatabase.getCollection[BillingRow]("Transactions")
-        .insertOne(r) toFuture() map(_ => ())
+  def insertBilling(rows : Seq[BillingRow])(implicit ec: ExecutionContext) : Kleisli[Future, MongoClient, Unit] = Kleisli {
+    dbClient =>
+      println("inserting rows...")
+      dbClient
+        .getDatabase("bank").withCodecRegistry(BillingRow.getCodec)
+        .getCollection[BillingRow]("Transactions")
+        .insertMany(rows).toFuture()
+        .map(_ => ())
+        .recoverWith {
+          case e: Throwable =>
+            Future.failed(BillingInsertionError(s"An error occurred while inserting billing informations, ${e.getMessage}"))
+        }
+
   }
 
-  def getBillingRows(fields : Seq[String]) : Kleisli[Future, MongoDatabase, Seq[BillingRow]] = Kleisli {
-    mongoDatabase =>
-      (mongoDatabase.getCollection[Document]("Transactions")
-        .find[Document]
-        .projection(include(fields: _*)) toFuture()) map(e => e.flatMap(parseBillingRow))
+  def getBillingRows(fields : Seq[String])(implicit ec: ExecutionContext) : Kleisli[Future, MongoClient, Seq[BillingRow]] = Kleisli {
+    dbClient =>
+      dbClient.getDatabase("Bank")
+        .getCollection("Transactions")
+        .find[Document].projection(include(fields: _*)) toFuture() map(e => e.flatMap(parseBillingRow))
   }
 
   private def parseBillingRow(doc: Document) : Option[BillingRow] = {
@@ -34,9 +47,7 @@ object MongoBillingRepo  {
       valDate <- doc.get[BsonString]("valueDate") map(d => dateFmt.parse(d.getValue))
       label <- doc.get[BsonString]("label") map(_ getValue)
       amount <- doc.get[BsonDouble]("amount") map(_ asDouble() getValue)
-    } yield if(amount > 0.0)
-      CreditRow(opDate, valDate, label, amount.toFloat)
-    else
-      DebitRow(opDate, valDate, label, amount.toFloat)
+    } yield
+      BillingRow(opDate, valDate, label, amount.toFloat)
   }
 }
