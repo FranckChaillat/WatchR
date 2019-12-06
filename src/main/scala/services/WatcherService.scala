@@ -16,8 +16,7 @@ object WatcherService {
 
   def registerBilling(login: String, pwd: String)(implicit ec: ExecutionContext) : Kleisli[Future, Repositories, Unit] = Kleisli {
     repositories : Repositories =>
-      val date = new SimpleDateFormat("dd/MM/yyyy").parse("30/09/2019")
-
+      val date = new SimpleDateFormat("dd/MM/yyyy").parse("30/11/2019")
       val fetchRows = for {
         _ <- connect(login, pwd)
         r <- getPaymentHistory(date)
@@ -84,18 +83,12 @@ object WatcherService {
   private def connect(login: String, pwd: String): Reader[ChromeDriver, Unit] = Reader {
     driver =>
       driver.get("https://www.cmso.com/banque/assurance/credit-mutuel/web/j_6/accueil")
-      val connectionLink = driver.findElement(By.id("connexion-link"))
-      connectionLink.click()
+      getElement(driver)("//*[@id=\"connexion-link\"]")(e => e.click())
+      getElement(driver)("//*[@id=\"identifiant\"]")(e => e.sendKeys(login))
+      getElement(driver)("//*[@id=\"auth-b_1\"]/div[3]/button")(e => e.click())
 
-        driver.findElement(By.xpath("//*[@id=\"identifiant\"]"))
-          .sendKeys(login)
-
-      //getElement(driver)("//*[@id=\"identifiant\"]")(e => e.click())
-
-      driver.findElement(By.xpath("//*[@id=\"auth-b_1\"]/div[3]/button")).click()
-
-      val path = """//div[@class ="gwt-DialogBox authenticationWidget"]//div[not(@id)]//table[not(@id)]//tbody[not(@id)]//tr[@class="dialogMiddle"]//td[@class="dialogMiddleCenter"]//div[@class="dialogMiddleCenterInner dialogContent"]//div[not(@id)]//div[@class="inner marges-nofusion"]//div[@class="authent-box"]//div[not(@id)]//div[not(@id)]//div[not(@id)]//div[@class="form-container auth-b-item auth-b-i-show"]//form[@id="formPassword"]//child::div[2]//input[@type="password"]"""
-      getElement(driver)(path)(element => element.sendKeys(pwd))
+      val pwPath = """//div[@class ="gwt-DialogBox authenticationWidget"]//div[not(@id)]//table[not(@id)]//tbody[not(@id)]//tr[@class="dialogMiddle"]//td[@class="dialogMiddleCenter"]//div[@class="dialogMiddleCenterInner dialogContent"]//div[not(@id)]//div[@class="inner marges-nofusion"]//div[@class="authent-box"]//div[not(@id)]//div[not(@id)]//div[not(@id)]//div[@class="form-container auth-b-item auth-b-i-show"]//form[@id="formPassword"]//child::div[2]//input[@type="password"]"""
+      getElement(driver)(pwPath)(element => element.sendKeys(pwd))
       driver.findElement(By.xpath("//*[@id=\"formPassword\"]/div[3]/button[2]")).click()
   }
 

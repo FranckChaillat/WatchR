@@ -8,11 +8,11 @@ import org.openqa.selenium.chrome.ChromeDriver
 import utils.DriverFactory
 import utils.configuration.{ConfigObject, Configuration}
 import org.json4s.jackson.Serialization.read
-
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
+//TODO: Templatiser l'addresse serveur + nom de BDD
 object Main {
 
   private def getMongoRepository(connectionString: String): MongoBillingRepo = {
