@@ -29,7 +29,7 @@ class BillingParserTest extends FlatSpec {
     assert(df.format(result.head.valueDate) == "24/07/2019")
     assert(df.format(result.head.operationDate) == "24/07/2019")
     assert(result.head.amount == -6.0)
-    assert(result.head.label == "CARTE 23/07 O TACOS MERIGNAC\r")
+    assert(result.head.label == "CARTE 23/07 O TACOS MERIGNAC")
 
   }
 }
