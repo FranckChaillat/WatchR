@@ -1,6 +1,7 @@
 package dataaccess
 
 import java.text.SimpleDateFormat
+import java.util.Date
 
 import entities.BillingRow
 import exceptions.BillingInsertionError
@@ -31,7 +32,6 @@ trait MongoBillingRepo extends BillingRepo {
           case e: Throwable =>
             Future.failed(BillingInsertionError(s"An error occurred while inserting billing informations, ${e.getMessage}"))
         }
-
   }
 
   def getBillingRows(fields : Seq[String])(implicit ec: ExecutionContext) : Kleisli[Future, MongoClient, Seq[BillingRow]] = Kleisli {

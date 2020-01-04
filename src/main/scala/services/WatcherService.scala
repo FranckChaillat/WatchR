@@ -5,12 +5,12 @@ import java.util.Date
 import dataaccess.Repositories
 import entities.BillingRow
 import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import org.openqa.selenium.{By, JavascriptExecutor, WebElement}
 import scalaz.{Kleisli, Reader}
 
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 object WatcherService {
 
@@ -22,35 +22,52 @@ object WatcherService {
       } yield r
 
       val rows = fetchRows(repositories.crawlingRepo)
+
       repositories.billingRepo.insertBilling(rows)
         .run(repositories.billingRepo.dbDriver)
   }
 
   def getPaymentHistory(limitDate: Date): Reader[ChromeDriver, Seq[BillingRow]] = Reader {
     driver =>
-      Thread.sleep(1000)
       getElement(driver)("//*[@id=\"app\"]/div/bux-modal[2]/div/div/button")(e => e.click())
+      Thread.sleep(100)
       val accountPath = "//*[@id=\"layout\"]/bux2-card[1]/bux2-card-body/bux2-widget-account/bux2-link/a"
       getElement(driver)(accountPath)(_.click())
+      Thread.sleep(100)
       getBillingRows(List())(driver, limitDate)
   }
 
   //TODO: gérer la pagination sur la nouvelle version du site
   @tailrec
   def getBillingRows(acc: List[BillingRow])(driver: ChromeDriver, limitDate: Date): List[BillingRow] = {
-    val tablePath = "//*[@id=\"tab01\"]/ul"//"//*[@id=\"titrePageFonctionnelle\"]/div[3]/div/div[2]/div/div/div[1]/div/table"
+    val tablePath = "//*[@id=\"tab01\"]/ul"//"
     val nextButton = "//*[@id=\"titrePageFonctionnelle\"]/div[3]/div/div[2]/div/div/div[1]/div/div[5]/table/tbody/tr/td[3]/div/img[1]"
-    val payHistoryTable = getElement(driver)(tablePath)(_.getText)
-
-    val rows = acc ++ parseBillingRows(payHistoryTable)
-    val needMoreRows = rows.sortBy(_.operationDate)
+    val parsedRows =  parseBilling(getElement(driver)(tablePath)(identity))
+    val newAcc = acc ++ parsedRows
+    val needMoreRows = newAcc.sortBy(_.operationDate)
       .headOption.exists(_.operationDate.compareTo(limitDate) > 0)
     if(needMoreRows) {
       getElement(driver)(nextButton) { x => x.click() }
-      getBillingRows(rows)(driver, limitDate)
+      getBillingRows(newAcc)(driver, limitDate)
     } else {
-      rows
+      newAcc
     }
+  }
+
+  def parseBilling(paymentTab: WebElement): Seq[BillingRow] = {
+    val lines = paymentTab.findElements(By.tagName("ul")).asScala.toList
+      .flatMap(x => x.findElements(By.tagName("li")).asScala.toList)
+      .map(x => x.getText)
+      .map { x =>
+        x.split("\\n") match {
+          case BillingRow(e: BillingRow) => Right(e)
+          case _ => Left(x)
+        }
+      }
+
+    //TODO: Manage parsing Errors
+    val (ko, ok) = lines.partition(x => x.isLeft)
+    ok.collect {case Right(e) => e }
   }
 
   def parseBillingRows(billingTabContent : String) : List[BillingRow] = {

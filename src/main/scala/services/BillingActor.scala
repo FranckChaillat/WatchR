@@ -9,8 +9,8 @@ import org.mongodb.scala.MongoClient
 import org.openqa.selenium.chrome.ChromeDriver
 import utils.DriverFactory
 import utils.configuration.Configuration
-
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 
 class BillingActor(config: Configuration)(implicit ec: ExecutionContext) extends Actor{
 
@@ -24,7 +24,7 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext) extends
 
   override def receive: Receive = {
     case RegisterBilling(date: Date) =>
-    WatcherService.registerBilling(config.login, config.pwd, date)
+    val result = WatcherService.registerBilling(config.login, config.pwd, date)
       .run(repositories)
       .map { _ =>
         println("Billing insertion have been done properly.")
@@ -34,5 +34,7 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext) extends
           println(s"An error occurred while registering billing: ${e.getMessage}")
           e.getMessage
       }
+
+      Await.result(result, 1 minute)
   }
 }
