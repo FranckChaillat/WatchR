@@ -11,7 +11,12 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.6.1",
+  "com.typesafe.akka" %% "akka-stream" % "2.5.26",
+  "com.typesafe.akka" %% "akka-http"   % "10.1.11",
+  "com.typesafe.akka" %% "akka-remote" % "2.6.4",
+  "io.aeron" % "aeron-driver" % "1.26.0",
+  "io.aeron" % "aeron-client" % "1.26.0",
+  "com.typesafe.akka" %% "akka-actor" % "2.6.4",
   "org.seleniumhq.selenium" % "selenium-java" % "2.47.1",
   "joda-time" % "joda-time" % "2.10.3",
   "org.scalatest" %% "scalatest" % "3.0.5" % "test",

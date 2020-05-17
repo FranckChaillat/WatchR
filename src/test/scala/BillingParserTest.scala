@@ -6,7 +6,7 @@ import services.WatcherService
 
 class BillingParserTest extends FlatSpec {
 
-  "string input" should "be converted into valids billing rows" in {
+ /* "string input" should "be converted into valids billing rows" in {
 
    val input = """|24/07/2019
       |24/07/2019
@@ -31,5 +31,5 @@ class BillingParserTest extends FlatSpec {
     assert(result.head.amount == -6.0)
     assert(result.head.label == "CARTE 23/07 O TACOS MERIGNAC")
 
-  }
+  }*/
 }

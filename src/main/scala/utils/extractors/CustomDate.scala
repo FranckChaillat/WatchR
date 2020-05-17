@@ -2,12 +2,13 @@ package utils.extractors
 
 import java.util.Date
 import java.text.SimpleDateFormat
+
 import scala.util.Try
 
 object CustomDate {
 
   def unapply(arg: String): Option[Date] = {
-    tryParse("dd/MM/yyyy")(arg)
+    tryParse("dd/MM/yy")(arg)
   }
 
   def tryParse(format: String)(dateString: String): Option[Date] = {
