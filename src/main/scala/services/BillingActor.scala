@@ -8,7 +8,6 @@ import akka.stream.Materializer
 import dataaccess._
 import entities.commands.RegisterBilling
 import org.json4s.DefaultFormats
-import org.openqa.selenium.chrome.ChromeDriver
 import utils.DriverFactory
 import utils.configuration.Configuration
 
@@ -22,7 +21,7 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext, materia
 
   lazy val repositories: Repositories = new Repositories {
     override def billingRepo: BillingRepo = ApiTransactionRepository
-    override val crawlingRepo: ChromeDriver = DriverFactory.buildDriver()
+    override val crawlingRepo: DriverFactory = new DriverFactory
     override def crawlingService: CrawlingService = ChromeService
     override def httpConnector: ApiRepository = new ApiRepository {
       override def baseUri: String = s"${config.joeUri}/joe"
@@ -44,6 +43,6 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext, materia
         }
       Await.result(result, 1 minute)
       repositories.crawlingRepo.close()
-
+      sender ! ()
   }
 }

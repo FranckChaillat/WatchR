@@ -4,9 +4,11 @@ import java.util.Date
 
 import entities.BillingRow
 import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import org.openqa.selenium.{By, JavascriptExecutor, WebElement}
 import scalaz.Reader
+
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
@@ -15,12 +17,11 @@ object ChromeService extends CrawlingService {
 
   def connect(login: String, pwd: String): Reader[ChromeDriver, Unit] = Reader {
     driver =>
-      driver.get("https://www.cmso.com/banque/assurance/credit-mutuel/web/j_6/accueil")
-      getElement(driver)("//*[@id=\"connexion-link\"]")(e => e.click())
-      getElement(driver)("//*[@id=\"userLogin\"]")(e => e.sendKeys(login))
-      getElement(driver)("//*[@id=\"auth-c_1\"]/button")(e => e.click())
-      getElement(driver)("//*[@id=\"userPassword\"]")(element => element.sendKeys(pwd))
-      driver.findElement(By.xpath("//*[@id=\"formLogin\"]/div[3]/div[2]/input")).click()
+      driver.get("https://mon.cmso.com/auth/login")
+      getElementById(driver)("userLogin")(setValue(driver)(login))
+      getElement(driver)("/html/body/novatio-app/novatio-router/div/main/section[2]/router-outlet/novatio-page/div/div/div/div/div/section/div[2]/form/div[4]/ux-btn")(e => e.click())
+      getElementById(driver)("userPassword")(setValue(driver)(pwd))
+      getElementById(driver)("btnConnect")(e => e.click())
   }
 
   def getPaymentHistory(limitDate: Date): Reader[ChromeDriver, Seq[BillingRow]] = Reader {
@@ -64,12 +65,13 @@ object ChromeService extends CrawlingService {
   }
 
   private def getBillingRows(acc: List[BillingRow])(driver: ChromeDriver, limitDate: Date): List[BillingRow] = {
-    val tablePath = "//*[@id=\"tab01\"]/ul"//"
+    val globalContent = (2 to 5).foldLeft(List.empty[BillingRow]) { (a, e) =>
+        val content = getElement(driver)(s"""//*[@id="operations-comptabilisees-tab"]/div/div[2]/div[$e]""")(identity)
+        a ++ parseBilling(content, Some(limitDate))
+    }
+
+    val newAcc = acc ++ groupBillingRows(globalContent)
     val nextButton = "//*[@id=\"titrePageFonctionnelle\"]/div[3]/div/div[2]/div/div/div[1]/div/div[5]/table/tbody/tr/td[3]/div/img[1]"
-    val parsedRows =  parseBilling(getElement(driver)(tablePath)(identity), Some(limitDate))
-    val newAcc = acc ++ groupBillingRows(parsedRows)
-    //    val needMoreRows = newAcc.sortBy(_.operationDate)
-    //      .headOption.exists(_.operationDate.compareTo(limitDate) > 0)
     if(false) {
       getElement(driver)(nextButton) { x => x.click() }
       getBillingRows(newAcc)(driver, limitDate)
@@ -86,25 +88,41 @@ object ChromeService extends CrawlingService {
       }).toSeq
   }
 
+  private def getElementById[T](driver: ChromeDriver)(id: String)(action: WebElement => T): T = {
+    val wait = new WebDriverWait(driver, 10)
+    val location = By.id(id)
+    wait.until(ExpectedConditions.visibilityOfElementLocated(location))
+    val we = driver.findElement(location)
+    val a = new Actions(driver)
+    a.moveToElement(we)
+
+    action(we)
+  }
+
   private def getElement[T](driver: ChromeDriver)(elementPath: String)(action: WebElement => T): T = {
     val script = s"""
                     |function func() {
                     | path = '$elementPath'
-                    | return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    | return document.evaluate(path, document, null, XPathResult.ANY_TYPE, null).singleNodeValue;
                     |}
                     |return func();
                  """.stripMargin
 
     val wait = new WebDriverWait(driver, 10)
     val location = By.xpath(elementPath)
-    wait.until(ExpectedConditions.presenceOfElementLocated(location))
+    wait.until(ExpectedConditions.visibilityOfElementLocated(location))
 
     val jsExe = driver.asInstanceOf[JavascriptExecutor]
-    val executed = jsExe.executeScript(script)
+    val executed = driver.findElement(location)
     val element = executed.asInstanceOf[WebElement]
-
     jsExe.executeScript("arguments[0].scrollIntoView();", element)
     Thread.sleep(100)
     action(element)
+  }
+
+
+  private def setValue(driver: ChromeDriver)(value: String)(we: WebElement): Unit = {
+    val jsExe = driver.asInstanceOf[JavascriptExecutor]
+    jsExe.executeScript(s"arguments[0].value = '$value';", we)
   }
 }

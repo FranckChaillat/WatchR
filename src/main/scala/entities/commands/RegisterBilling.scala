@@ -1,3 +1,3 @@
 package entities.commands
 
-case class RegisterBilling(limitDate: String)
+final case class RegisterBilling(limitDate: String)

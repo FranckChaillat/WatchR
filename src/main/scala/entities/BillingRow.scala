@@ -1,22 +1,15 @@
 package entities
 
-import java.nio.charset.StandardCharsets
+import java.math.BigInteger
 import java.sql.Timestamp
 import java.util.Date
-
 import exceptions.BillingParseException
-import javax.xml.bind.DatatypeConverter
-import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.bson.codecs.configuration.CodecRegistry
-import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.bson.codecs.Macros._
 import utils.extractors.{CustomDate, CustomFloat}
 
 import scala.util.{Failure, Success, Try}
 
 
-case class BillingRow(identifier: String, accountId: Int, operationDate: Date, valueDate: Date, label: String, amount: Float, occurence: Int = 1, category: Option[String] = None)
-
+final case class BillingRow(identifier: String, accountId: Int, operationDate: Date, valueDate: Date, label: String, amount: Float, occurence: Int = 1, category: Option[String] = None)
 
 object BillingRow {
 
@@ -24,9 +17,6 @@ object BillingRow {
     val rowId = hashRow(operationDate, valueDate, label, amount)
     new BillingRow(rowId, accountId, operationDate, valueDate, label, amount)
   }
-
-  def getCodec: CodecRegistry =
-    fromRegistries(fromProviders(classOf[BillingRow]), DEFAULT_CODEC_REGISTRY)
 
   def parseRow(arg: Array[String], accountId: Int, limitDate: Option[Date] = None): Try[Option[BillingRow]] = {
     if (arg.length > 13) {
@@ -46,15 +36,14 @@ object BillingRow {
   }
 
   private def hashRow(operationDate: Date, valueDate: Date, label: String, amount: Float) = {
-    import java.security.MessageDigest
-    val md = MessageDigest.getInstance("MD5")
     val str = Seq(
       new Timestamp(operationDate.getTime).toString,
       new Timestamp(valueDate.getTime).toString,
       label,
       amount).mkString(";")
-
-    val hashBytes = md.digest(str.getBytes(StandardCharsets.UTF_8))
-    DatatypeConverter.printHexBinary(hashBytes).toUpperCase()
+    val md = java.security.MessageDigest.getInstance("SHA-1")
+    md.reset()
+    md.update(str.getBytes("UTF-8"))
+    String.format("%040x", new BigInteger(1, md.digest()))
   }
 }
