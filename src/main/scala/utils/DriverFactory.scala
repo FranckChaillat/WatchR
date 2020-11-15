@@ -27,7 +27,7 @@ class DriverFactory {
     val chromeDriverPath = "./chromedriver"
     System.setProperty("webdriver.chrome.driver", chromeDriverPath)
     val options = new ChromeOptions()
-    options.addArguments("--disable-gpu", "--window-size=800,600","--ignore-certificate-errors")
+    options.addArguments("--disable-gpu", "--headless", "--window-size=800,600","--ignore-certificate-errors")
     val driver = new ChromeDriver(options)
     driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS)
     driver
