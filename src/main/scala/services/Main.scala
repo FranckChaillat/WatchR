@@ -27,7 +27,7 @@ object Main {
     val bindingFuture = Http().bindAndHandle(Router.routes(billingActor), "127.0.0.1", 9000)
 
     val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    system.scheduler.schedule(1 minute, 2 minute)(billingActor ! RegisterBilling(fmt.format(LocalDateTime.now())))
+    system.scheduler.schedule(0 minute, 30 seconds)(billingActor ! RegisterBilling(fmt.format(LocalDateTime.now())))
     Await.result(system.whenTerminated, Duration.Inf)
     system.registerOnTermination(() => bindingFuture.flatMap(_.unbind()))
   }
