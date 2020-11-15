@@ -21,7 +21,7 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext, materia
 
   lazy val repositories: Repositories = new Repositories {
     override def billingRepo: BillingRepo = ApiTransactionRepository
-    override val crawlingRepo: DriverFactory = new DriverFactory
+    override val crawlingRepo: DriverFactory = new DriverFactory(config.driverPath)
     override def crawlingService: CrawlingService = ChromeService
     override def httpConnector: ApiRepository = new ApiRepository {
       override def baseUri: String = s"${config.joeUri}/joe"

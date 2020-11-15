@@ -18,6 +18,7 @@ object ChromeService extends CrawlingService {
   def connect(login: String, pwd: String): Reader[ChromeDriver, Unit] = Reader {
     driver =>
       driver.get("https://mon.cmso.com/auth/login")
+      getElement(driver)("/html/body/novatio-app/novatio-router/div/bux-cnil/aside/button")(e => e.click())
       getElementById(driver)("userLogin")(setValue(driver)(login))
       getElement(driver)("/html/body/novatio-app/novatio-router/div/main/section[2]/router-outlet/novatio-page/div/div/div/div/div/section/div[2]/form/div[4]/ux-btn")(e => e.click())
       getElementById(driver)("userPassword")(setValue(driver)(pwd))

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
 
-class DriverFactory {
+class DriverFactory(driverPath: String) {
 
   private var driver : Option[ChromeDriver] = None
 
@@ -24,8 +24,7 @@ class DriverFactory {
   }
 
   private def buildDriver(): ChromeDriver = {
-    val chromeDriverPath = "/usr/bin/chromedriver"
-    System.setProperty("webdriver.chrome.driver", chromeDriverPath)
+    System.setProperty("webdriver.chrome.driver", driverPath)
     val options = new ChromeOptions()
     options.addArguments("--disable-gpu", "--headless", "--window-size=800,600","--ignore-certificate-errors")
     val driver = new ChromeDriver(options)
