@@ -24,7 +24,7 @@ class DriverFactory {
   }
 
   private def buildDriver(): ChromeDriver = {
-    val chromeDriverPath = "./chromedriver"
+    val chromeDriverPath = "/usr/bin/chromedriver"
     System.setProperty("webdriver.chrome.driver", chromeDriverPath)
     val options = new ChromeOptions()
     options.addArguments("--disable-gpu", "--headless", "--window-size=800,600","--ignore-certificate-errors")
