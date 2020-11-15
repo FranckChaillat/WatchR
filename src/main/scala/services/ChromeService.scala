@@ -100,14 +100,6 @@ object ChromeService extends CrawlingService {
   }
 
   private def getElement[T](driver: ChromeDriver)(elementPath: String)(action: WebElement => T): T = {
-    val script = s"""
-                    |function func() {
-                    | path = '$elementPath'
-                    | return document.evaluate(path, document, null, XPathResult.ANY_TYPE, null).singleNodeValue;
-                    |}
-                    |return func();
-                 """.stripMargin
-
     val wait = new WebDriverWait(driver, 10)
     val location = By.xpath(elementPath)
     wait.until(ExpectedConditions.visibilityOfElementLocated(location))
