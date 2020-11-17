@@ -12,6 +12,7 @@ class DriverFactory(driverPath: String) {
     driver match {
       case Some(v) =>
         v.close()
+        v.quit()
         driver = Some(buildDriver());driver.get
       case None =>
         driver = Some(buildDriver());driver.get
@@ -19,7 +20,7 @@ class DriverFactory(driverPath: String) {
   }
 
   def close() = {
-    this.driver.foreach(_.close())
+    this.driver.foreach(d => { d.close(); d.quit() })
     this.driver = None
   }
 
