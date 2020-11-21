@@ -1,13 +1,10 @@
 package utils.configuration
 
-
-import java.io.File
-
 import com.typesafe.config.Config
 
 import scala.io.Source
 
-final case class Configuration(joeUri : String, login: String, pwd: String, driverPath: String)
+final case class Configuration(joeUri : String, login: String, pwd: String, driverPath: String, dayoffset: Option[Int])
 
 object Configuration {
   def getConfiguration()(implicit config: Config): Configuration = {
@@ -23,7 +20,8 @@ object Configuration {
       config.getString("service.dataaccess.joeuri"),
       envVars("accountloging"),
       envVars("accountpwd"),
-      config.getString("service.crawling.driverPath")
+      config.getString("service.crawling.driverPath"),
+      if(config.getIsNull("service.crawling.dayOffset")) None else Some(config.getInt("service.crawling.dayOffset"))
     )
 
     src.close()

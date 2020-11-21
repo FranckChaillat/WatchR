@@ -1,7 +1,7 @@
 package services
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.{Calendar, Date}
 
 import akka.actor.{ActorSystem, Props}
 import akka.dispatch.MessageDispatcher
@@ -23,11 +23,22 @@ object Main {
     implicit val system: ActorSystem = ActorSystem("watcher")
     implicit val materializer: Materializer = SystemMaterializer(system).materializer
     implicit val executionContext: MessageDispatcher = system.dispatchers.lookup("billing-dispatcher")
-    val billingActor = system.actorOf(Props(new BillingActor(Configuration.getConfiguration())), name = "BillingActor")
+
+    val configuration = Configuration.getConfiguration()
+    val billingActor = system.actorOf(Props(new BillingActor(configuration)), name = "BillingActor")
     val bindingFuture = Http().bindAndHandle(Router.routes(billingActor), "127.0.0.1", 9000)
 
-    val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    system.scheduler.schedule(0 minute,  1 hour)(billingActor ! RegisterBilling(fmt.format(LocalDateTime.now())))
+    val fmt = new SimpleDateFormat("dd/MM/yyyy")
+    val date = configuration.dayoffset.map { o =>
+      val c = Calendar.getInstance()
+      c.setTime(new Date())
+      c.add(Calendar.DATE, -o)
+      fmt.format(c.getTime)
+    }.getOrElse {
+      fmt.format(new Date())
+    }
+
+    system.scheduler.schedule(0 minute,  3 hour)(billingActor ! RegisterBilling(date))
     Await.result(system.whenTerminated, Duration.Inf)
     system.registerOnTermination(() => bindingFuture.flatMap(_.unbind()))
   }
