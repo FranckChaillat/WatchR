@@ -21,7 +21,7 @@ object Configuration {
       envVars("accountloging"),
       envVars("accountpwd"),
       config.getString("service.crawling.driverPath"),
-      if(config.getIsNull("service.crawling.dayOffset")) None else Some(config.getInt("service.crawling.dayOffset"))
+      if(!config.hasPath("service.crawling.dayOffset")) None else Some(config.getInt("service.crawling.dayOffset"))
     )
 
     src.close()
