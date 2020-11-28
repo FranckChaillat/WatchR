@@ -1,10 +1,9 @@
 package utils.configuration
 
 import com.typesafe.config.Config
-
 import scala.io.Source
 
-final case class Configuration(joeUri : String, login: String, pwd: String, driverPath: String, dayoffset: Option[Int])
+final case class Configuration(joeUri : String, login: String, pwd: String, driverPath: String, dayoffset: Option[Int], triggerIntervalSeconds : Option[Int])
 
 object Configuration {
   def getConfiguration()(implicit config: Config): Configuration = {
@@ -18,10 +17,11 @@ object Configuration {
 
     val conf = Configuration(
       config.getString("service.dataaccess.joeuri"),
-      envVars("accountloging"),
-      envVars("accountpwd"),
-      config.getString("service.crawling.driverPath"),
-      if(!config.hasPath("service.crawling.dayOffset")) None else Some(config.getInt("service.crawling.dayOffset"))
+        envVars("accountloging"),
+        envVars("accountpwd"),
+        config.getString("service.crawling.driverPath"),
+        if(!config.hasPath("service.crawling.dayOffset")) None else Some(config.getInt("service.crawling.dayOffset")),
+        if(!config.hasPath("service.crawling.interval")) None else Some(config.getInt("service.crawling.interval"))
     )
 
     src.close()

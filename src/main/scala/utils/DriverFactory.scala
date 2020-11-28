@@ -22,6 +22,7 @@ class DriverFactory(driverPath: String) {
   def close() = {
     this.driver.foreach(d => { d.close(); d.quit() })
     this.driver = None
+    //Runtime.getRuntime().exec("pkill ")
   }
 
   private def buildDriver(): ChromeDriver = {

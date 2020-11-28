@@ -38,7 +38,7 @@ object Main {
       fmt.format(new Date())
     }
 
-    system.scheduler.schedule(0 minute,  3 hour)(billingActor ! RegisterBilling(date))
+    system.scheduler.schedule(0 minute,  configuration.triggerIntervalSeconds.getOrElse(60) seconds)(billingActor ! RegisterBilling(date))
     Await.result(system.whenTerminated, Duration.Inf)
     system.registerOnTermination(() => bindingFuture.flatMap(_.unbind()))
   }
