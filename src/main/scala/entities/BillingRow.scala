@@ -19,20 +19,21 @@ object BillingRow {
   }
 
   def parseRow(arg: Array[String], accountId: Int, limitDate: Option[Date] = None): Try[Option[BillingRow]] = {
-    if (arg.length > 13) {
-      Array(3, 6, 9, 13).map(arg.apply) match {
-        case Array(CustomDate(opDate), CustomDate(valDate), label, CustomFloat(value))  =>
-          Success {
-            if (limitDate.forall(lim => lim.compareTo(opDate) <= 0)) {
-              Some(BillingRow(accountId, opDate, valDate, label, value))
-            } else
-              None
-          }
-        case _ => Failure(BillingParseException("Unable to parse log."))
-      }
+    val items = if(arg.length == 12) {
+      Array(3, 6, 9, 11).map(arg.apply)
+    } else {
+      Array(3, 6, 9, 13).map(arg.apply)
     }
-    else
-      Failure(BillingParseException("Format was not the one expected"))
+    items match {
+      case Array(CustomDate(opDate), CustomDate(valDate), label, CustomFloat(value))  =>
+        Success {
+          if (limitDate.forall(lim => lim.compareTo(opDate) <= 0))
+            Some(BillingRow(accountId, opDate, valDate, label, value))
+           else
+            None
+        }
+      case _ => Failure(BillingParseException("Unable to parse log."))
+    }
   }
 
   private def hashRow(operationDate: Date, valueDate: Date, label: String, amount: Float) = {

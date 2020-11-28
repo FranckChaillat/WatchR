@@ -41,7 +41,7 @@ object ChromeService extends CrawlingService {
       .foldLeft(Seq.empty[BillingRow]) { (acc, e) =>
         BillingRow.parseRow(e.getText.split("\\n"), accountId = 1, limitDate) match {
           case Success(res) => res.map(x => acc.+:(x)).getOrElse(acc)
-          case Failure(_) =>
+          case Failure(err) =>
             //TODO: manage errors
             println("Error while trying to parse billing row")
             acc
