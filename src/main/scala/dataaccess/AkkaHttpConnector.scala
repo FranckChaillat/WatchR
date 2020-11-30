@@ -1,11 +1,15 @@
 package dataaccess
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.model.headers.RawHeader
 import org.json4s.jackson.Serialization.{read, write}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpHeader, HttpMethods, HttpRequest, Uri}
 import akka.stream.Materializer
 import akka.util.ByteString
-import org.json4s.Formats
+import org.json4s.JsonAST.JString
+import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -15,7 +19,7 @@ class AkkaHttpConnector(http: HttpExt)(implicit formats: Formats, materializer: 
    val request =  HttpRequest(uri = uri, method = HttpMethods.POST, entity = HttpEntity(ContentTypes.`application/json`, write[T](entity)))
    http.singleRequest(request)
       .flatMap { result =>
-        result.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(c  => read[U](c.toString()))
+        result.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(c  => read[U](c.utf8String))
       }
   }
 

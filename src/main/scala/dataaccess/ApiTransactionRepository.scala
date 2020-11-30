@@ -12,18 +12,19 @@ object ApiTransactionRepository extends BillingRepo {
 
   def insertBilling(rows: Seq[BillingRow], limitDate: Date)(implicit ec: ExecutionContext): Kleisli[Future, ApiRepository, Unit] = Kleisli {
     httpRepository =>
-      val fmt = new SimpleDateFormat("dd/MM/yyyy")
+      val fmt = new SimpleDateFormat("yyyy-MM-dd")
       val request = BulkAddTransactionRequest(
         transactions = rows.map(r => AddTransactionRequest(r.accountId, fmt.format(r.operationDate), fmt.format(r.valueDate), r.amount, r.label, None)),
         overwrite = true,
         limitDate = Some(fmt.format(limitDate))
       )
-      httpRepository.httpConnector.post(s"${httpRepository.baseUri}/payments/bulk", request)
+      httpRepository.httpConnector.post[BulkAddTransactionRequest, String](s"${httpRepository.baseUri}/payments/bulk", request)
+        .map(_ => ())
   }
 
   def getBilling(accountId: Int, startDate: Date, endDate: Date)(implicit ec: ExecutionContext): Kleisli[Future, ApiRepository, Seq[BillingRow]] = Kleisli {
     httpRepository =>
-      val fmt = new SimpleDateFormat("dd/MM/yyyy")
+      val fmt = new SimpleDateFormat("yyyy-MM-dd")
       val params = Map(
         "startDate"-> fmt.format(startDate),
         "endDate" -> fmt.format(endDate),

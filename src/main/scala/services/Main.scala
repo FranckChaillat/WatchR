@@ -28,7 +28,7 @@ object Main {
     val billingActor = system.actorOf(Props(new BillingActor(configuration)), name = "BillingActor")
     val bindingFuture = Http().bindAndHandle(Router.routes(billingActor), "127.0.0.1", 9000)
 
-    val fmt = new SimpleDateFormat("dd/MM/yyyy")
+    val fmt = new SimpleDateFormat("yyyy-MM-dd")
     val date = configuration.dayoffset.map { o =>
       val c = Calendar.getInstance()
       c.setTime(new Date())

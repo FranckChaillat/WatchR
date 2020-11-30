@@ -7,8 +7,9 @@ import akka.http.scaladsl.Http
 import akka.stream.Materializer
 import dataaccess._
 import entities.commands.RegisterBilling
-import org.json4s.DefaultFormats
+import org.json4s.{DefaultFormats, Formats}
 import utils.DriverFactory
+import utils.Formats.StringToDate
 import utils.configuration.Configuration
 
 import scala.concurrent.duration._
@@ -17,7 +18,7 @@ import scala.concurrent.{Await, ExecutionContext}
 
 class BillingActor(config: Configuration)(implicit ec: ExecutionContext, materializer: Materializer, actorSystem: ActorSystem) extends Actor{
 
-  private implicit val fmt: DefaultFormats.type = DefaultFormats
+  implicit val formats: Formats = DefaultFormats + StringToDate
 
   lazy val repositories: Repositories = new Repositories {
     override def billingRepo: BillingRepo = ApiTransactionRepository
@@ -31,7 +32,7 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext, materia
 
   override def receive: Receive = {
     case RegisterBilling(limitDate: String) =>
-      val fmt = new SimpleDateFormat("dd/MM/yyyy")
+      val fmt = new SimpleDateFormat("yyyy-MM-dd")
       val result = WatcherService.registerBilling(config.login, config.pwd, fmt.parse(limitDate))
         .run(repositories)
         .map { _ =>
@@ -43,6 +44,5 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext, materia
         }
       Await.result(result, 1 minute)
       repositories.crawlingRepo.close()
-      sender ! ()
   }
 }

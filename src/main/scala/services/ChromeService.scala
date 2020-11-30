@@ -66,7 +66,7 @@ object ChromeService extends CrawlingService {
   }
 
   private def getBillingRows(acc: List[BillingRow])(driver: ChromeDriver, limitDate: Date): List[BillingRow] = {
-    val globalContent = (2 to 5).foldLeft(List.empty[BillingRow]) { (a, e) =>
+    val globalContent = (2 until 5).foldLeft(List.empty[BillingRow]) { (a, e) =>
         val content = getElement(driver)(s"""//*[@id="operations-comptabilisees-tab"]/div/div[2]/div[$e]""")(identity)
         a ++ parseBilling(content, Some(limitDate))
     }
