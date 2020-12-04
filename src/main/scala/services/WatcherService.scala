@@ -4,10 +4,12 @@ import java.util.Date
 
 import dataaccess.Repositories
 import entities.BillingRow
+import exceptions.CrawlingException
 import scalaz.Kleisli
 import scalaz.std.scalaFuture._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Try}
 
 object WatcherService {
 
@@ -19,14 +21,21 @@ object WatcherService {
         r <- crawlingService.getPaymentHistory(date)
       } yield r
 
-      val collectedRows = fetchRows(repositories.crawlingRepo.open())
-      if(collectedRows.nonEmpty) {
-        repositories.billingRepo.getBilling(1, date, new Date())
-          .map(actual =>  mergeBilling(collectedRows.toSet, actual.toSet))
-          .flatMap(rows => repositories.billingRepo.insertBilling(rows, date))
-          .run(repositories.httpConnector)
-      } else
-        Future.unit
+      val collectedRows = Try(fetchRows(repositories.crawlingRepo.open()))
+          .recoverWith {
+            case t: Throwable =>
+              Failure(CrawlingException(s"An error occured while crawling the source ${t.getMessage}", t))
+          }
+      Future.fromTry(collectedRows)
+        .flatMap { rows =>
+          if(rows.nonEmpty) {
+            repositories.billingRepo.getBilling(1, date, new Date())
+              .map(actual =>  mergeBilling(rows.toSet, actual.toSet))
+              .flatMap(rows => repositories.billingRepo.insertBilling(rows, date))
+              .run(repositories.httpConnector)
+          } else
+            Future.unit
+        }
   }
 
   private def mergeBilling(collected: Set[BillingRow], actual: Set[BillingRow]) = {
