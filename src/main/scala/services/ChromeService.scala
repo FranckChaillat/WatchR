@@ -52,11 +52,11 @@ object ChromeService extends CrawlingService {
   private def closeModals(driver: ChromeDriver): Unit = {
     @tailrec
     def close(index: Int): Unit = {
-      val wait = new WebDriverWait(driver, 20)
+      val wait = new WebDriverWait(driver, 60)
       wait.until(ExpectedConditions.presenceOfElementLocated(By.className("c-modal__close")))
       val modals = driver.findElementsByClassName("c-modal__close").asScala
       if(index <= modals.length-1) {
-        Thread.sleep(100)
+        Thread.sleep(1000)
         modals(index).click()
         close(index + 1)
       }
