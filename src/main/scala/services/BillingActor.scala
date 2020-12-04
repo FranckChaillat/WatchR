@@ -35,14 +35,16 @@ class BillingActor(config: Configuration)(implicit ec: ExecutionContext, materia
       val fmt = new SimpleDateFormat("yyyy-MM-dd")
       val result = WatcherService.registerBilling(config.login, config.pwd, fmt.parse(limitDate))
         .run(repositories)
-        .map { _ =>
+
+      val res = result.map { _ =>
           println("Billing insertion have been done properly.")
+          repositories.crawlingRepo.close()
         }.recover {
-           case e: Throwable =>
-            println(s"An error occurred while registering billing: ${e.getMessage}")
-            e.getMessage
-        }
-      Await.result(result, 1 minute)
-      repositories.crawlingRepo.close()
+        case e: Throwable =>
+          println(s"An error occurred while registering billing: ${e.getMessage}")
+          repositories.crawlingRepo.close()
+      }
+
+      Await.result(res, 10 minute)
   }
 }

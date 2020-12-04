@@ -22,7 +22,8 @@ class DriverFactory(driverPath: String) {
   def close() = {
     this.driver.foreach(d => { d.close(); d.quit() })
     this.driver = None
-    Runtime.getRuntime.exec("pgrep --signal TERM -f chrome")
+    Runtime.getRuntime.exec("pkill --signal TERM -f chrome")
+    ()
   }
 
   private def buildDriver(): ChromeDriver = {
