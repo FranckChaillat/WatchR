@@ -22,7 +22,7 @@ class DriverFactory(driverPath: String) {
   def close() = {
     this.driver.foreach(d => { d.close(); d.quit() })
     this.driver = None
-    Runtime.getRuntime.exec("pkill --signal TERM -f /snap/bin/chromium")
+    Runtime.getRuntime.exec("pkill --signal TERM -f /snap/chromium/1417/usr/lib/chromium-browser/chrome")
     ()
   }
 
