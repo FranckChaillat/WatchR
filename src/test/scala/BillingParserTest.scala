@@ -1,35 +1,62 @@
-import java.text.SimpleDateFormat
+import java.util.Date
 
 import entities.BillingRow
 import org.scalatest.FlatSpec
-import services.WatcherService
 
 class BillingParserTest extends FlatSpec {
 
- /* "string input" should "be converted into valids billing rows" in {
+  it should "merge actual data and collected" in {
+    val date1 = new Date()
+    val date2 = new Date()
+    val date3 = new Date()
 
-   val input = """|24/07/2019
-      |24/07/2019
-      |CARTE 23/07 O TACOS MERIGNAC
-      |- 6,00 €
-      |23/07/2019
-      |23/07/2019
-      |CARTE 22/07 KEOLIS TBM DTTT BORDEAUX
-      |- 7,60 €
-      |19/07/2019
-      |19/07/2019
-      |CARTE 19/07 OSTERIA PIZZERIA BORDEAUX
-      |- 3,50 €""".stripMargin
+    val actual = Seq (
+      BillingRow(1, date1, date1, "payment 1", 12.0f).copy(category = Some("exampleCat")),
+      BillingRow(1, date2, date2, "payment 2", 12.0f)
+    )
 
+    val collected = Seq (
+      BillingRow(1, date1, date1, "payment 1", 12.0f),
+      BillingRow(1, date2, date2, "payment 2", 12.0f),
+      BillingRow(1, date3, date3, "payment 3", 12.0f),
+    )
 
-    val df = new SimpleDateFormat("dd/MM/yyyy")
-    val result = WatcherService.parseBillingRows (input)
-    assert(result.length == 3)
-    assert(result.forall(_.isInstanceOf[BillingRow]))
-    assert(df.format(result.head.valueDate) == "24/07/2019")
-    assert(df.format(result.head.operationDate) == "24/07/2019")
-    assert(result.head.amount == -6.0)
-    assert(result.head.label == "CARTE 23/07 O TACOS MERIGNAC")
+    val merged = BillingRow.mergeBilling(collected, actual)
+    val expected = Seq(
+      BillingRow(1, date1, date1, "payment 1", 12.0f).copy(category = Some("exampleCat")),
+      BillingRow(1, date2, date2, "payment 2", 12.0f),
+      BillingRow(1, date3, date3, "payment 3", 12.0f)
+    )
+    assert(merged == expected)
+  }
 
-  }*/
+  it should "merge actual data and collected and keep actual that has not been collected" in {
+    val date1 = new Date()
+    val date2 = new Date()
+    val date3 = new Date()
+    val date4 = new Date()
+
+    val actual = Seq (
+      BillingRow(1, date1, date1, "payment 1", 12.0f).copy(category = Some("exampleCat")),
+      BillingRow(1, date2, date2, "payment 2", 12.0f),
+      BillingRow(1, date4, date4, "payment custom", 42f)
+    )
+
+    val collected = Seq (
+      BillingRow(1, date1, date1, "payment 1", 12.0f),
+      BillingRow(2, date2, date2, "payment 2", 12.0f),
+      BillingRow(1, date3, date3, "payment 3", 25.0f),
+    )
+
+    val merged = BillingRow.mergeBilling(collected, actual)
+
+    val expected = Seq(
+      BillingRow(1, date1, date1, "payment 1", 12.0f).copy(category = Some("exampleCat")),
+      BillingRow(1, date2, date2, "payment 2", 12.0f),
+      BillingRow(1, date3, date3, "payment 3", 25.0f),
+      BillingRow(1, date4, date4, "payment custom", 42f)
+    )
+    assert(merged == expected)
+  }
+
 }

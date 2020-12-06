@@ -2,7 +2,9 @@ package entities
 
 import java.math.BigInteger
 import java.sql.Timestamp
+import java.text.SimpleDateFormat
 import java.util.Date
+
 import exceptions.BillingParseException
 import utils.extractors.{CustomDate, CustomFloat}
 
@@ -14,7 +16,8 @@ final case class BillingRow(identifier: String, accountId: Int, operationDate: D
 object BillingRow {
 
   def apply(accountId: Int, operationDate: Date, valueDate: Date, label: String, amount: Float): BillingRow = {
-    val rowId = hashRow(operationDate, valueDate, label, amount)
+    val fmt = new SimpleDateFormat("yyyy-MM-dd")
+    val rowId = hashRow(fmt.format(operationDate), fmt.format(valueDate), label, amount)
     new BillingRow(rowId, accountId, operationDate, valueDate, label, amount)
   }
 
@@ -36,15 +39,25 @@ object BillingRow {
     }
   }
 
-  private def hashRow(operationDate: Date, valueDate: Date, label: String, amount: Float) = {
-    val str = Seq(
-      new Timestamp(operationDate.getTime).toString,
-      new Timestamp(valueDate.getTime).toString,
-      label,
-      amount).mkString(";")
+  private def hashRow(operationDate: String, valueDate: String, label: String, amount: Float) = {
+    val str = Seq(operationDate, valueDate, label, amount).mkString(";")
     val md = java.security.MessageDigest.getInstance("SHA-1")
     md.reset()
     md.update(str.getBytes("UTF-8"))
     String.format("%040x", new BigInteger(1, md.digest()))
+  }
+
+  def mergeBilling(collected: Seq[BillingRow], actual: Seq[BillingRow]): Seq[BillingRow] = {
+    val mapActual = actual.map(a => a.identifier -> a).toMap
+    val mapCollected = collected.map(c => c.identifier -> c).toMap
+
+    val leftJoined = collected.map { x =>
+      mapActual.getOrElse(x.identifier, x)
+    }
+
+    val missing = mapActual.keySet.diff(mapCollected.keySet).map(mapActual.apply).toSeq
+
+    leftJoined ++ missing
+
   }
 }

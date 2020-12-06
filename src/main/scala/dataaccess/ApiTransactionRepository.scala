@@ -14,7 +14,7 @@ object ApiTransactionRepository extends BillingRepo {
     httpRepository =>
       val fmt = new SimpleDateFormat("yyyy-MM-dd")
       val request = BulkAddTransactionRequest(
-        transactions = rows.map(r => AddTransactionRequest(r.accountId, fmt.format(r.operationDate), fmt.format(r.valueDate), r.amount, r.label, None)),
+        transactions = rows.map(r => AddTransactionRequest(r.accountId, fmt.format(r.operationDate), fmt.format(r.valueDate), r.amount, r.label, r.category)),
         overwrite = true,
         limitDate = Some(fmt.format(limitDate))
       )

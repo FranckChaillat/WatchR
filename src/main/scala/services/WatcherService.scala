@@ -30,22 +30,11 @@ object WatcherService {
         .flatMap { rows =>
           if(rows.nonEmpty) {
             repositories.billingRepo.getBilling(1, date, new Date())
-              .map(actual =>  mergeBilling(rows.toSet, actual.toSet))
+              .map(actual =>  BillingRow.mergeBilling(rows, actual))
               .flatMap(rows => repositories.billingRepo.insertBilling(rows, date))
               .run(repositories.httpConnector)
           } else
             Future.unit
         }
   }
-
-  private def mergeBilling(collected: Set[BillingRow], actual: Set[BillingRow]) = {
-    val categoryMapping = actual.groupBy(_.identifier).map(x => x._1 -> x._2.head.category)
-    val merged = collected.map(x => {
-      val maybeCategory = categoryMapping.get(x.identifier).flatten
-      maybeCategory.map(c => x.copy(category = Some(c))).getOrElse(x)
-    })
-
-    (actual.diff(merged) ++ merged).toSeq
-  }
-
 }

@@ -28,10 +28,9 @@ object ChromeService extends CrawlingService {
   def getPaymentHistory(limitDate: Date): Reader[ChromeDriver, Seq[BillingRow]] = Reader {
     driver =>
       closeModals(driver)
-      Thread.sleep(100)
+      Thread.sleep(1000)
       val accountPath = "//*[@id=\"layout\"]/bux2-card[1]/bux2-card-body/bux2-widget-account/bux2-link/a"
       getElement(driver)(accountPath)(_.click())
-      Thread.sleep(100)
       getBillingRows(List())(driver, limitDate)
   }
 
@@ -40,7 +39,10 @@ object ChromeService extends CrawlingService {
       .flatMap(x => x.findElements(By.tagName("li")).asScala.toList)
       .foldLeft(Seq.empty[BillingRow]) { (acc, e) =>
         BillingRow.parseRow(e.getText.split("\\n"), accountId = 1, limitDate) match {
-          case Success(res) => res.map(x => acc.+:(x)).getOrElse(acc)
+          case Success(Some(res)) => acc.+:(res)
+          case Success(None) =>
+            println("Unparsable rows found ... ")
+            acc
           case Failure(err) =>
             //TODO: manage errors
             println("Error while trying to parse billing row")
@@ -67,7 +69,7 @@ object ChromeService extends CrawlingService {
   }
 
   private def getBillingRows(acc: List[BillingRow])(driver: ChromeDriver, limitDate: Date): List[BillingRow] = {
-    val globalContent = (2 until 5).foldLeft(List.empty[BillingRow]) { (a, e) =>
+    val globalContent = (2 to 5).foldLeft(List.empty[BillingRow]) { (a, e) =>
         val content = getElement(driver)(s"""//*[@id="operations-comptabilisees-tab"]/div/div[2]/div[$e]""")(identity)
         a ++ parseBilling(content, Some(limitDate))
     }

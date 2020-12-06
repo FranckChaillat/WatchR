@@ -9,6 +9,7 @@ object CustomDate {
 
   def unapply(arg: String): Option[Date] = {
     tryParse("dd/MM/yy")(arg)
+      .orElse(tryParse("dd/MM/yyyy")(arg))
   }
 
   def tryParse(format: String)(dateString: String): Option[Date] = {
