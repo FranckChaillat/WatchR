@@ -18,19 +18,20 @@ object ChromeService extends CrawlingService {
   def connect(login: String, pwd: String): Reader[ChromeDriver, Unit] = Reader {
     driver =>
       driver.get("https://mon.cmso.com/auth/login")
-      getElement(driver)("/html/body/novatio-app/novatio-router/div/bux-cnil/aside/button")(e => e.click())
       getElementById(driver)("userLogin")(setValue(driver)(login))
-      getElement(driver)("/html/body/novatio-app/novatio-router/div/main/section[2]/router-outlet/novatio-page/div/div/div/div/div/section/div[2]/form/div[4]/ux-btn")(e => e.click())
+      getElement(driver)("/html/body/novatio-app/novatio-router/div/div/ux-main/div[1]/router-outlet/novatio-page/div/div/div/div/div/section/div[2]/form/div[2]/ux-btn")(e => e.click())
       getElementById(driver)("userPassword")(setValue(driver)(pwd))
       getElementById(driver)("btnConnect")(e => e.click())
   }
 
   def getPaymentHistory(limitDate: Date): Reader[ChromeDriver, Seq[BillingRow]] = Reader {
     driver =>
-      closeModals(driver)
-      Thread.sleep(1000)
-      val accountPath = "//*[@id=\"layout\"]/bux2-card[1]/bux2-card-body/bux2-widget-account/bux2-link/a"
-      getElement(driver)(accountPath)(_.click())
+      //closeModals(driver)
+      //Thread.sleep(1000)
+     // val accountPath = "//*[@id=\"layout\"]/bux2-card[1]/bux2-card-body/bux2-widget-account/bux2-link/a"
+      getElement(driver)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/span[1]")(_.click())
+      getElement(driver)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/ux-menu-item[1]")(_.click())
+      getElement(driver)("/html/body/novatio-app/novatio-router/div/div/ux-main/div/router-outlet/novatio-page/div/div/div/div/div/div/div/div/div/ul/li[1]/div[2]/a")(_.click())
       getBillingRows(List())(driver, limitDate)
   }
 
@@ -54,9 +55,7 @@ object ChromeService extends CrawlingService {
   private def closeModals(driver: ChromeDriver): Unit = {
     @tailrec
     def close(index: Int): Unit = {
-//      val wait = new WebDriverWait(driver, 20)
-//      wait.until(ExpectedConditions.presenceOfElementLocated(By.className("c-modal__close")))
-      Thread.sleep(10000)
+      Thread.sleep(1000)
       val modals = driver.findElementsByClassName("c-modal__close").asScala
       if(index <= modals.length-1) {
         Thread.sleep(1000)
