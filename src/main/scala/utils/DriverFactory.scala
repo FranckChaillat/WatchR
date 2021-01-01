@@ -29,7 +29,7 @@ class DriverFactory(driverPath: String) {
   private def buildDriver(): ChromeDriver = {
     System.setProperty("webdriver.chrome.driver", driverPath)
     val options = new ChromeOptions()
-    options.addArguments("--disable-gpu",/* "--headless", */"--ignore-certificate-errors", "--start-maximized"/*, "--blink-settings=imagesEnabled=false", "--start-maximized"*/)
+    options.addArguments("--disable-gpu",/* "--headless", */"--ignore-certificate-errors", "--start-maximized", "--disable-popup-blocking")
     val driver = new ChromeDriver(options)
     driver.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS)
     driver

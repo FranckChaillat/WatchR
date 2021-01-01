@@ -25,7 +25,7 @@ object BillingRow {
     val items = if(arg.length == 12) {
       Array(3, 6, 9, 11).map(arg.apply)
     } else {
-      Array(3, 6, 9, 13).map(arg.apply)
+      Array(3, 6, 9, 12).map(arg.apply)
     }
     items match {
       case Array(CustomDate(opDate), CustomDate(valDate), label, CustomFloat(value))  =>
