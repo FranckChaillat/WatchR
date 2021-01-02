@@ -2,7 +2,7 @@ package utils.extractors
 
 object CustomFloat {
   def unapply(arg: String): Option[Float] = {
-    val ValidAmout = "\\d+.\\d+".r
+    val ValidAmout = "([^\\x00-\\x7F]?\\d+.\\d+)".r
     ValidAmout.findFirstMatchIn(arg.replaceAll(" ", "")) match {
       case Some(f)=>
         val mtch = f.group(0)

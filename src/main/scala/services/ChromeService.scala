@@ -28,11 +28,11 @@ object ChromeService extends CrawlingService {
   def getPaymentHistory(limitDate: Date): Reader[ChromeDriver, Seq[BillingRow]] = Reader {
     driver =>
       closeModals(driver)
-      Thread.sleep(1000)
+      Thread.sleep(2000)
      // val accountPath = "//*[@id=\"layout\"]/bux2-card[1]/bux2-card-body/bux2-widget-account/bux2-link/a"
-      getElement(driver)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/span[1]")(_.click())
-      getElement(driver)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/ux-menu-item[1]")(_.click())
-      getElement(driver)("/html/body/novatio-app/novatio-router/div/div/ux-main/div/router-outlet/novatio-page/div/div/div/div/div/div/div/div/div/ul/li[1]/div[2]/a")(_.click())
+      getElement(driver, false)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/span[1]")(_.click())
+      getElement(driver, false)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/ux-menu-item[1]")(_.click())
+      getElement(driver, false)("/html/body/novatio-app/novatio-router/div/div/ux-main/div/router-outlet/novatio-page/div/div/div/div/div/div/div/div/div/ul/li[1]/div[2]/a")(_.click())
       getBillingRows(List())(driver, limitDate)
   }
 
@@ -93,15 +93,17 @@ object ChromeService extends CrawlingService {
     action(we)
   }
 
-  private def getElement[T](driver: ChromeDriver)(elementPath: String)(action: WebElement => T): T = {
+  private def getElement[T](driver: ChromeDriver, scrowl: Boolean = true)(elementPath: String)(action: WebElement => T): T = {
     val wait = new WebDriverWait(driver, 10)
     val location = By.xpath(elementPath)
     wait.until(ExpectedConditions.visibilityOfElementLocated(location))
 
-    val jsExe = driver.asInstanceOf[JavascriptExecutor]
     val executed = driver.findElement(location)
     val element = executed.asInstanceOf[WebElement]
-    jsExe.executeScript("arguments[0].scrollIntoView();", element)
+    if(scrowl) {
+      val jsExe = driver.asInstanceOf[JavascriptExecutor]
+      jsExe.executeScript("arguments[0].scrollIntoView();", element)
+    }
     Thread.sleep(100)
     action(element)
   }
