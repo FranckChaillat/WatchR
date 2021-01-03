@@ -9,7 +9,6 @@ import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import org.openqa.selenium.{By, JavascriptExecutor, WebElement}
 import scalaz.Reader
 
-import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
 

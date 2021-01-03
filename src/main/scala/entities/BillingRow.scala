@@ -24,9 +24,16 @@ object BillingRow {
   def parseRow(arg: Array[String], accountId: Int, limitDate: Option[Date] = None): Try[Option[BillingRow]] = {
     val items = if(arg.length == 12) {
       Array(3, 6, 9, 11).map(arg.apply)
-    } else {
+    } else if (arg.length == 13 && arg.exists(_.toLowerCase().trim == "libellé :")){
       Array(3, 6, 9, 12).map(arg.apply)
+    } else if(arg.length == 13) {
+      Array(3, 6, 8, 12).map(arg.apply)
+    } else if(arg.length == 14) {
+      Array(3, 6 ,9 ,13).map(arg.apply)
+    } else {
+      Array(3, 6, 9, 14).map(arg.apply)
     }
+
     items match {
       case Array(CustomDate(opDate), CustomDate(valDate), label, CustomFloat(value))  =>
         Success {
