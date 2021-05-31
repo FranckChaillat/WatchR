@@ -17,6 +17,7 @@ object ChromeService extends CrawlingService {
   def connect(login: String, pwd: String): Reader[ChromeDriver, Unit] = Reader {
     driver =>
       driver.get("https://mon.cmso.com/auth/login")
+      getElement(driver)("/html/body/div/div/div/div/div/div/div[3]/button[3]")(_.click())
       getElementById(driver)("userLogin")(setValue(driver)(login))
       getElement(driver)("/html/body/novatio-app/novatio-router/div/div/ux-main/div[1]/router-outlet/novatio-page/div/div/div/div/div/section/div[2]/form/div[2]/ux-btn")(e => e.click())
       getElementById(driver)("userPassword")(setValue(driver)(pwd))
@@ -26,10 +27,11 @@ object ChromeService extends CrawlingService {
 
   def getPaymentHistory(limitDate: Date): Reader[ChromeDriver, Seq[BillingRow]] = Reader {
     driver =>
-      closeModals(driver)
+     // closeModals(driver)
       Thread.sleep(2000)
      // val accountPath = "//*[@id=\"layout\"]/bux2-card[1]/bux2-card-body/bux2-widget-account/bux2-link/a"
-      getElement(driver, false)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/span[1]")(_.click())
+      getElement(driver)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]")(_.click())
+      //getElement(driver, false)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/span[1]")(_.click())
       getElement(driver, false)("/html/body/novatio-app/novatio-router/div/novatio-navbar/ux-sidebar/ux-menu/ux-menu-item-dropdown[1]/ux-menu-item[1]")(_.click())
       getElement(driver, false)("/html/body/novatio-app/novatio-router/div/div/ux-main/div/router-outlet/novatio-page/div/div/div/div/div/div/div/div/div/ul/li[1]/div[2]/a")(_.click())
       getBillingRows(List())(driver, limitDate)
@@ -58,7 +60,7 @@ object ChromeService extends CrawlingService {
     jsExe.executeScript("document.querySelector(\"#dashboard-top > ux-modal:nth-child(4)\").shadowRoot.querySelector(\"div > section > div.c-modal__header > button\").click()")}
 
   private def getBillingRows(acc: List[BillingRow])(driver: ChromeDriver, limitDate: Date): List[BillingRow] = {
-    val globalContent = (2 to 5).foldLeft(List.empty[BillingRow]) { (a, e) =>
+    val globalContent = (2 to 4).foldLeft(List.empty[BillingRow]) { (a, e) =>
         val content = getElement(driver)(s"""//*[@id="operations-comptabilisees-tab"]/div/div[2]/div[$e]""")(identity)
         a ++ parseBilling(content, Some(limitDate))
     }

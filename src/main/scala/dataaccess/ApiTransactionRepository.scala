@@ -6,7 +6,7 @@ import entities.BillingRow
 import entities.dto.{AddTransactionRequest, BulkAddTransactionRequest}
 import scalaz.Kleisli
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 object ApiTransactionRepository extends BillingRepo {
 
@@ -31,5 +31,7 @@ object ApiTransactionRepository extends BillingRepo {
         "accountId" -> accountId.toString
       )
       httpRepository.httpConnector.get[Seq[BillingRow]](s"${httpRepository.baseUri}/payments", params)
+
+
   }
 }
